@@ -5,58 +5,91 @@ import {
   query,
   collection,
   onSnapshot,
-  QuerySnapshot,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 import { async } from "@firebase/util";
 
 // import "./Todo.css";
 function Todo() {
   const [task, setTask] = useState("");
-  const [data, setData] = useState([]);
+  const [data, setData] = useState([
+    {
+      text: "",
+      completed: false,
+      id: "",
+    },
+  ]);
+
+  const toggleComplete = async (todo) => {
+    await updateDoc(doc(db, "todos", todo.id), {
+      completed: !todo["comple"],
+    });
+    console.log(todo["comple"]);
+  };
 
   const onChangeHandler = (e) => {
     setTask(e.target.value);
+    console.log(task);
   };
 
-  const submitHandler = (e) => {
-    //   e.preventDefault();
-    //   const todoRef = app.database().ref("Todo");
-    //   if (task !== "") {
-    //     // console.log(task);
-    //     const newData = task;
-    //     setData([...data, newData]);
-    //     // console.log(newData);
-    //     const todo = {
-    //       task,
-    //       complete: false,
-    //     };
-    //     todoRef.push(todo);
-    //     setTask("");
-    //   } else {
-    //     alert("enter data");
-    //   }
+  const submitHandler = async (e) => {
+    e.preventDefault(e);
+    if (task === "") {
+      alert("Please enter a valid todo");
+      return;
+    }
+    await addDoc(collection(db, "todos"), {
+      text: task,
+      completed: false,
+    });
+    setTask("");
   };
+
   useEffect(() => {
     const q = query(collection(db, "todos"));
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      let todoArr = [];
-      await querySnapshot.forEach((doc) => {
-        todoArr.push({ ...doc.data(), id: doc.id });
+      console.log("df");
+      let todosArr = [
+        {
+          text: "",
+          completed: "",
+          id: "",
+        },
+      ];
+      querySnapshot.forEach((doc) => {
+        // console.log(doc.data());
+
+        todosArr.push({ ...doc.data(), id: doc.id });
+        // console.log(doc.data());
+        // console.log(todosArr[1]);
       });
-      await setData(todoArr);
-      console.log(data[0].text);
+      if (todosArr.length >= 1) {
+        setData(todosArr);
+      }
+      // console.log(data[1]["text"]);
     });
     return () => unsubscribe();
   }, []);
-  const deleteItem = (a) => {
-    const finalData = data.filter((curEle, index) => {
-      return index !== a;
-    });
-    setData(finalData);
+  // useEffect(() => {
+  //   const q = query(collection(db, "todos"));
+  //   const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+  //     let todoArr = [];
+  //     console.log("Dff");
+  //     await querySnapshot.forEach((doc) => {
+  //       todoArr.push({ ...doc.data(), id: doc.id });
+  //     });
+  //     await setData(todoArr);
+  //   });
+  //   return () => unsubscribe();
+  // }, []);
+  const deleteItem = async (id) => {
+    await deleteDoc(doc(db, "todos", id));
   };
   const showdata = () => {
-    console.log("FD");
-    // console.log(data[0]);
+    // <h1>he</h1>;
     // data.forEach((x) => {
     //   return <h2>x.text</h2>;
     // });
@@ -93,8 +126,29 @@ function Todo() {
             </button>
           </div>
         </form>
-        <div className="overflow-y-auto h-[22rem] ">
-          <Display complete={data[0].target} task={data[0].text} />
+        <div className="overflow-y-auto h-[22rem]">
+          {data.map((value, index) => {
+            {
+              return (
+                index != 0 && (
+                  <Display
+                    task={value["text"]}
+                    id={value["id"]}
+                    comple={value["completed"]}
+                    toggleComplete={toggleComplete}
+                    onSelect={deleteItem}
+                  />
+                )
+              );
+            }
+            {
+              /* if (index != 0) {
+              return <Display task={value["text"]} />;
+            } */
+            }
+          })}
+
+          {/* heloo */}
         </div>
       </div>
     </div>
